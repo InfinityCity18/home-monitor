@@ -1,8 +1,13 @@
+use std::sync::OnceLock;
+
 use anyhow::Result;
 use tokio_rusqlite::Connection;
 use tracing::info;
 use tracing::Level;
-use tracing_subscriber::util::SubscriberInitExt;
+
+static DB_CONNECTION: OnceLock<Connection> = OnceLock::new();
+
+mod database;
 
 const DB_PATH: &str = "data.db";
 
@@ -14,7 +19,8 @@ async fn main() -> Result<()> {
 
     info!("Tracing initialized");
 
-    info!("Trying to connect to database...");
-    let conn = Connection::open(DB_PATH).await?;
+    let conn = database::init_database(DB_PATH).await?;
+    let _ = DB_CONNECTION.set(conn);
+
     Ok(())
 }
