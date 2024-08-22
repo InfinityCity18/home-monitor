@@ -1,4 +1,5 @@
 use crate::period::{set_period, Period};
+use plotters::prelude::*;
 use plotters::{chart::ChartBuilder, drawing::IntoDrawingArea};
 use plotters_canvas::CanvasBackend;
 use yew::prelude::*;
@@ -12,9 +13,9 @@ pub fn TemperatureWindow() -> Html {
     html! {
         <div>
             <select>
-                <option onclick={set_period(period.clone(), Period::Day)} value="Last 24h"/>
-                <option onclick={set_period(period.clone(), Period::Week)} value="Last week"/>
-                <option onclick={set_period(period.clone(), Period::Month)} value="Last month"/>
+                <option onclick={set_period(period.clone(), Period::Day)} value={format!("Last {}", Period::Day.to_lowercase_text())}/>
+                <option onclick={set_period(period.clone(), Period::Week)} value={format!("Last {}", Period::Week.to_lowercase_text())}/>
+                <option onclick={set_period(period.clone(), Period::Month)} value={format!("Last {}", Period::Month.to_lowercase_text())}/>
             </select>
             <TemperaturePlot p={(*period).clone()}/>
         </div>
@@ -27,10 +28,20 @@ fn TemperaturePlot(TemperaturePlotProps { p }: &TemperaturePlotProps) -> Html {
         .expect(format!("Could not get CanvasBackend from {}", TEMPERATURE_PLOT_ID).as_str());
     let root = backend.into_drawing_area();
 
-    let mut chart = ChartBuilder::on(&root).margin(10).caption(
-        format!("Temperature in last {}", p.to_lowercase_text()),
-        style,
-    );
+    let mut chart = ChartBuilder::on(&root)
+        .margin(10)
+        .caption(
+            format!("Temperature in last {}", p.to_lowercase_text()),
+            ("sans-serif", 40),
+        )
+        .set_label_area_size(LabelAreaPosition::Left, 60)
+        .set_label_area_size(LabelAreaPosition::Right, 60)
+        .set_label_area_size(LabelAreaPosition::Bottom, 40)
+        .build_cartesian_2d(
+            (Utc.ymd(2010, 1, 1)..Utc.ymd(2018, 12, 1)).monthly(),
+            14.0..104.0,
+        )
+        .unwrap();
 
     html! {
         <div>
