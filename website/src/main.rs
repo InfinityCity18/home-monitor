@@ -1,6 +1,7 @@
 use yew::prelude::*;
 
 mod humidity;
+mod period;
 mod temperature;
 
 #[function_component(App)]
