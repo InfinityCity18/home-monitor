@@ -1,3 +1,4 @@
+use temperature::TemperatureWindow;
 use yew::prelude::*;
 
 mod humidity;
@@ -6,7 +7,7 @@ mod temperature;
 
 #[function_component(App)]
 fn app() -> Html {
-    html! {}
+    html! {<TemperatureWindow />}
 }
 
 fn main() {
