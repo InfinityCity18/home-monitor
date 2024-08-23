@@ -32,9 +32,13 @@ impl TableType {
     }
 }
 
+pub trait ToSqlDebug: ToSql + Debug + Send + Sync {}
+impl ToSqlDebug for f64 {}
+impl ToSqlDebug for bool {}
+
 #[instrument(level = "debug", skip(conn))]
 pub async fn insert<T: ToSql + Debug + Send + Sync + 'static>(
-    timestamp: u32,
+    timestamp: i64,
     data: T,
     conn: &OnceLock<Connection>,
     table_type: TableType,

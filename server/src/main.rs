@@ -1,5 +1,7 @@
 use anyhow::Result;
+use axum::routing::post;
 use axum::Router;
+use post::monitor_post;
 use std::sync::OnceLock;
 use tokio_rusqlite::Connection;
 use tracing::info;
@@ -7,10 +9,12 @@ use tracing::Level;
 
 mod cors;
 mod database;
+mod error;
 mod post;
 
 const DB_PATH: &str = "data.db";
 const BIND_SOCK_ADDR: &str = "0.0.0.0:8138";
+const MONITOR_PATH: &str = "/monitor";
 
 static DB_CONNECTION: OnceLock<Connection> = OnceLock::new();
 
@@ -25,7 +29,7 @@ async fn main() -> Result<()> {
     let conn = database::init_database(DB_PATH).await?;
     DB_CONNECTION.set(conn).unwrap();
 
-    let app = Router::new();
+    let app = Router::new().route(MONITOR_PATH, post(monitor_post));
 
     let listener = tokio::net::TcpListener::bind(BIND_SOCK_ADDR).await?;
     axum::serve(listener, app).await?;
