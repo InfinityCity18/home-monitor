@@ -1,10 +1,12 @@
-use std::sync::OnceLock;
-
 use anyhow::Result;
-use tokio_rusqlite::Connection;
-use tracing::info;
+use std::fmt::Debug;
+use std::sync::OnceLock;
+use tokio_rusqlite::ToSql;
+use tokio_rusqlite::{params, Connection};
+use tracing::{info, instrument, trace};
 
-enum TableType {
+#[derive(Debug)]
+pub enum TableType {
     Temperature,
     Humidity,
     Motion,
@@ -12,28 +14,49 @@ enum TableType {
 }
 
 impl TableType {
-    pub fn into_text(&self) -> &str {
+    pub fn table_name(&self) -> String {
         match self {
-            TableType::Temperature => "temperature",
-            TableType::Humidity => "humidity",
-            TableType::Motion => "motion",
-            TableType::Light => "light",
+            TableType::Temperature => "temperature".to_string(),
+            TableType::Humidity => "humidity".to_string(),
+            TableType::Motion => "motion".to_string(),
+            TableType::Light => "light".to_string(),
         }
     }
-    pub fn column_type(&self) -> &str {
+    pub fn column_type(&self) -> String {
         match self {
-            TableType::Temperature => "temp",
-            TableType::Humidity => "humd",
-            TableType::Motion => "detected_motion",
-            TableType::Light => "is_light",
+            TableType::Temperature => "temp".to_string(),
+            TableType::Humidity => "humd".to_string(),
+            TableType::Motion => "detected_motion".to_string(),
+            TableType::Light => "is_light".to_string(),
         }
     }
 }
 
-pub async fn insert(conn: OnceLock<Connection>, type: TableType) -> Result<()> {
-    let conn = conn.get().unwrap();
+#[instrument(level = "debug", skip(conn))]
+pub async fn insert<T: ToSql + Debug + Send + Sync + 'static>(
+    timestamp: u32,
+    data: T,
+    conn: &OnceLock<Connection>,
+    table_type: TableType,
+) -> Result<()> {
+    trace!("Inserting into database...");
 
-    conn.call(|conn| conn.execute("", params))
+    let conn = conn.get().unwrap();
+    let table = table_type.table_name();
+    let column_name = table_type.column_type();
+
+    conn.call(move |conn| {
+        conn.execute(
+            format!("INSERT INTO {table} (time, {column_name}) VALUES (?1, ?2)").as_str(),
+            params![timestamp, data],
+        )?;
+        Ok(())
+    })
+    .await?;
+
+    trace!("Insertion succeded");
+
+    Ok(())
 }
 
 pub async fn init_database(path: &str) -> Result<Connection> {

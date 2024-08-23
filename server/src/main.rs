@@ -1,15 +1,18 @@
-use std::sync::OnceLock;
-
 use anyhow::Result;
+use axum::Router;
+use std::sync::OnceLock;
 use tokio_rusqlite::Connection;
 use tracing::info;
 use tracing::Level;
 
-static DB_CONNECTION: OnceLock<Connection> = OnceLock::new();
-
+mod cors;
 mod database;
+mod post;
 
 const DB_PATH: &str = "data.db";
+const BIND_SOCK_ADDR: &str = "0.0.0.0:8138";
+
+static DB_CONNECTION: OnceLock<Connection> = OnceLock::new();
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -20,7 +23,12 @@ async fn main() -> Result<()> {
     info!("Tracing initialized");
 
     let conn = database::init_database(DB_PATH).await?;
-    let _ = DB_CONNECTION.set(conn);
+    DB_CONNECTION.set(conn).unwrap();
+
+    let app = Router::new();
+
+    let listener = tokio::net::TcpListener::bind(BIND_SOCK_ADDR).await?;
+    axum::serve(listener, app).await?;
 
     Ok(())
 }
