@@ -14,10 +14,10 @@ pub fn TemperatureWindow() -> Html {
 
     html! {
         <div>
-            <select>
-                <option selected=true onclick={set_period(period.clone(), Period::Day)}>{format!("Last {}", Period::Day.to_lowercase_text())}</option>
-                <option onclick={set_period(period.clone(), Period::Week)}>{format!("Last {}", Period::Week.to_lowercase_text())}</option>
-                <option onclick={set_period(period.clone(), Period::Month)}>{format!("Last {}", Period::Month.to_lowercase_text())}</option>
+            <select onchange={set_period(period.clone())}>
+                <option selected=true value={Period::Day.to_lowercase_text()}>{format!("Last {}", Period::Day.to_lowercase_text())}</option>
+                <option value={Period::Week.to_lowercase_text()}>{format!("Last {}", Period::Week.to_lowercase_text())}</option>
+                <option value={Period::Month.to_lowercase_text()}>{format!("Last {}", Period::Month.to_lowercase_text())}</option>
             </select>
             <TemperaturePlot p={(*period).clone()}/>
         </div>
@@ -48,7 +48,7 @@ fn draw_plot(p: Period) {
     let root = backend.into_drawing_area();
 
     let end = Local::now();
-    let start = end - Days::new(1);
+    let start = end - Days::new(p.amount_of_days());
 
     root.fill(&WHITE).expect("Filling failed");
 
@@ -67,8 +67,8 @@ fn draw_plot(p: Period) {
     chart
         .configure_mesh()
         .disable_x_mesh()
-        .x_labels(30)
-        .x_label_formatter(&|x| format!("{}:{:02}", x.hour(), x.minute()))
+        .x_labels(24)
+        .x_label_formatter(&p.format_fn())
         .max_light_lines(4)
         .y_desc("Temperature (C°)")
         .draw()
