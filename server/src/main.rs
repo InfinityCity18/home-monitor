@@ -10,6 +10,8 @@ use tracing::Level;
 mod cors;
 mod database;
 mod error;
+mod get;
+mod period;
 mod post;
 
 const DB_PATH: &str = "data.db";

@@ -1,11 +1,13 @@
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::sync::OnceLock;
+use tokio_rusqlite::types::FromSql;
 use tokio_rusqlite::ToSql;
 use tokio_rusqlite::{params, Connection};
 use tracing::{info, instrument, trace};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub enum TableType {
     Temperature,
     Humidity,
@@ -63,8 +65,12 @@ pub async fn insert<T: ToSql + Debug + Send + Sync + 'static>(
     Ok(())
 }
 
-#[instrument(level = "debug")]
-pub async fn select(conn: &OnceLock<Connection>, table_type: TableType) -> Result<Vec<(i64, f64)>> {
+#[instrument(level = "debug", skip(conn))]
+pub async fn select<T: FromSql + Send + Sync + 'static>(
+    conn: &OnceLock<Connection>,
+    table_type: TableType,
+    timestamp: i64,
+) -> Result<Vec<(i64, T)>> {
     trace!("Selecting from database...");
 
     let conn = conn.get().unwrap();
@@ -72,14 +78,16 @@ pub async fn select(conn: &OnceLock<Connection>, table_type: TableType) -> Resul
 
     let data = conn
         .call(move |conn| {
-            let mut stmt = conn.prepare(format!("SELECT * FROM {table} ORDER BY time").as_str())?;
+            let mut stmt = conn.prepare(
+                format!("SELECT * FROM {table} ORDER BY time WHERE time > {timestamp}").as_str(),
+            )?;
             let i = stmt
                 .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
                 .map(|r| match r {
                     Ok(a) => Ok(a),
                     Err(e) => Err(tokio_rusqlite::Error::from(e)),
                 })
-                .collect::<std::result::Result<Vec<(i64, f64)>, tokio_rusqlite::Error>>()?;
+                .collect::<std::result::Result<Vec<(i64, T)>, tokio_rusqlite::Error>>()?;
             Ok(i)
         })
         .await?;
