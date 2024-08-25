@@ -67,9 +67,9 @@ fn draw_plot(p: Period) {
     chart
         .configure_mesh()
         .disable_x_mesh()
-        .x_labels(24)
+        .x_labels(p.label_amount())
         .x_label_formatter(&p.format_fn())
-        .max_light_lines(4)
+        .max_light_lines(5)
         .y_desc("Temperature (C°)")
         .draw()
         .expect("Failed to draw on ChartContext");

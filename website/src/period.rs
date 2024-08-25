@@ -25,6 +25,13 @@ impl Period {
             Period::Month => 30,
         }
     }
+    pub fn label_amount(&self) -> usize {
+        match self {
+            Period::Day => 24,
+            Period::Week => 7,
+            Period::Month => 30,
+        }
+    }
     pub fn format_fn(&self) -> impl Fn(&DateTime<Local>) -> String + '_ {
         move |x| match self {
             Period::Day => format!("{}:{:02}", x.hour(), x.minute()),

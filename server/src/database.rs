@@ -22,7 +22,7 @@ impl TableType {
             TableType::Light => "light".to_string(),
         }
     }
-    pub fn column_type(&self) -> String {
+    pub fn column_name(&self) -> String {
         match self {
             TableType::Temperature => "temp".to_string(),
             TableType::Humidity => "humd".to_string(),
@@ -47,7 +47,7 @@ pub async fn insert<T: ToSql + Debug + Send + Sync + 'static>(
 
     let conn = conn.get().unwrap();
     let table = table_type.table_name();
-    let column_name = table_type.column_type();
+    let column_name = table_type.column_name();
 
     conn.call(move |conn| {
         conn.execute(
@@ -61,6 +61,32 @@ pub async fn insert<T: ToSql + Debug + Send + Sync + 'static>(
     trace!("Insertion succeded");
 
     Ok(())
+}
+
+#[instrument(level = "debug")]
+pub async fn select(conn: &OnceLock<Connection>, table_type: TableType) -> Result<Vec<(i64, f64)>> {
+    trace!("Selecting from database...");
+
+    let conn = conn.get().unwrap();
+    let table = table_type.table_name();
+
+    let data = conn
+        .call(move |conn| {
+            let mut stmt = conn.prepare(format!("SELECT * FROM {table} ORDER BY time").as_str())?;
+            let i = stmt
+                .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
+                .map(|r| match r {
+                    Ok(a) => Ok(a),
+                    Err(e) => Err(tokio_rusqlite::Error::from(e)),
+                })
+                .collect::<std::result::Result<Vec<(i64, f64)>, tokio_rusqlite::Error>>()?;
+            Ok(i)
+        })
+        .await?;
+
+    trace!("Selecting successful, returning data");
+
+    Ok(data)
 }
 
 pub async fn init_database(path: &str) -> Result<Connection> {
