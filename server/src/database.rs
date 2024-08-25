@@ -5,6 +5,7 @@ use std::sync::OnceLock;
 use tokio_rusqlite::types::FromSql;
 use tokio_rusqlite::ToSql;
 use tokio_rusqlite::{params, Connection};
+use tracing::debug;
 use tracing::{info, instrument, trace};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -13,6 +14,10 @@ pub enum TableType {
     Humidity,
     Motion,
     Light,
+}
+
+pub trait TableTypeSelector {
+    type T: FromSql + Send + Sync + 'static;
 }
 
 impl TableType {
@@ -79,7 +84,7 @@ pub async fn select<T: FromSql + Send + Sync + 'static>(
     let data = conn
         .call(move |conn| {
             let mut stmt = conn.prepare(
-                format!("SELECT * FROM {table} ORDER BY time WHERE time > {timestamp}").as_str(),
+                format!("SELECT * FROM {table} WHERE time > {timestamp} ORDER BY time").as_str(),
             )?;
             let i = stmt
                 .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))?
