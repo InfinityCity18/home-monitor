@@ -1,7 +1,10 @@
 use crate::period::set_period;
 use crate::period::Period;
+use plotters::style::RGBColor;
 use serde::{Deserialize, Serialize};
 use yew::prelude::*;
+
+pub const BG_COLOR: RGBColor = RGBColor(66, 66, 74);
 
 #[derive(Properties, PartialEq, Debug, Clone)]
 pub struct PlotProps {
@@ -48,7 +51,7 @@ fn Plot(PlotProps { p, f, id, t }: &PlotProps) -> Html {
         f.emit((period_clone, id_clone, t_clone));
     });
     html! {
-        <div>
+        <div class="plot-box">
             <canvas height=400 width=1400 id={id.clone()}/>
         </div>
     }
@@ -59,7 +62,7 @@ pub fn PlotWindow(props: &PlotWindowProps) -> Html {
     let period = use_state(|| Period::Day);
 
     html! {
-        <div>
+        <div class="plot-window">
             <select onchange={set_period(period.clone())}>
                 <option selected=true value={Period::Day.to_lowercase_text()}>{format!("Last {}", Period::Day.to_lowercase_text())}</option>
                 <option value={Period::Week.to_lowercase_text()}>{format!("Last {}", Period::Week.to_lowercase_text())}</option>

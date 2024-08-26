@@ -1,6 +1,6 @@
 use crate::consts::SERVER_URL;
 use crate::period::Period;
-use crate::plot::{ClientRequest, TableType};
+use crate::plot::{ClientRequest, TableType, BG_COLOR};
 use chrono::{DateTime, Days, Local};
 use full_palette::WHITE;
 use gloo_net::http::Request;
@@ -16,16 +16,23 @@ pub fn draw_plot((p, id, t): (Period, String, TableType)) {
             .expect(format!("Could not get CanvasBackend from {}", &id).as_str());
         let root = backend.into_drawing_area();
 
+        let style = ("sans-serif", 40, &WHITE);
+        let shape_style = ShapeStyle {
+            color: WHITE.into(),
+            filled: true,
+            stroke_width: 2,
+        };
+
         let end = Local::now();
         let start = end - Days::new(p.amount_of_days());
 
-        root.fill(&WHITE).expect("Filling failed");
+        root.fill(&BG_COLOR).expect("Filling failed");
 
         let mut chart = ChartBuilder::on(&root)
             .margin(10)
             .caption(
                 format!("{} in last {}", t.to_string(), p.to_lowercase_text()),
-                ("sans-serif", 40),
+                style,
             )
             .set_label_area_size(LabelAreaPosition::Left, 60)
             .set_label_area_size(LabelAreaPosition::Right, 60)
@@ -38,6 +45,8 @@ pub fn draw_plot((p, id, t): (Period, String, TableType)) {
             .disable_x_mesh()
             .x_labels(p.label_amount())
             .x_label_formatter(&p.format_fn())
+            .axis_style(shape_style)
+            .label_style(&WHITE)
             .max_light_lines(5)
             .y_desc("Humidity (%)")
             .draw()

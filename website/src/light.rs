@@ -1,10 +1,10 @@
 use crate::consts::SERVER_URL;
 use crate::period::Period;
-use crate::plot::{ClientRequest, TableType};
+use crate::plot::{ClientRequest, TableType, BG_COLOR};
 use chrono::{DateTime, Days, Local};
-use full_palette::WHITE;
 use gloo_net::http::Request;
 use plotters::prelude::*;
+use plotters::style::WHITE;
 use plotters::{chart::ChartBuilder, drawing::IntoDrawingArea};
 use plotters_canvas::CanvasBackend;
 
@@ -19,16 +19,23 @@ pub fn draw_plot((p, id, t): (Period, String, TableType)) {
         let end = Local::now();
         let start = end - Days::new(p.amount_of_days());
 
-        root.fill(&WHITE).expect("Filling failed");
+        let style = ("sans-serif", 40, &WHITE);
+        let shape_style = ShapeStyle {
+            color: WHITE.into(),
+            filled: true,
+            stroke_width: 2,
+        };
+
+        root.fill(&BG_COLOR).expect("Filling failed");
 
         let mut chart = ChartBuilder::on(&root)
             .margin(10)
             .caption(
                 format!("{} in last {}", t.to_string(), p.to_lowercase_text()),
-                ("sans-serif", 40),
+                style,
             )
-            .set_label_area_size(LabelAreaPosition::Left, 60)
-            .set_label_area_size(LabelAreaPosition::Right, 60)
+            .set_label_area_size(LabelAreaPosition::Left, 80)
+            .set_label_area_size(LabelAreaPosition::Right, 80)
             .set_label_area_size(LabelAreaPosition::Bottom, 40)
             .build_cartesian_2d(start..end, 0.0..100000.0)
             .expect("Failed to build chart");
@@ -38,6 +45,8 @@ pub fn draw_plot((p, id, t): (Period, String, TableType)) {
             .disable_x_mesh()
             .x_labels(p.label_amount())
             .x_label_formatter(&p.format_fn())
+            .axis_style(shape_style)
+            .label_style(&WHITE)
             .max_light_lines(5)
             .y_desc("Light (lux)")
             .draw()
