@@ -5,7 +5,6 @@ use std::sync::OnceLock;
 use tokio_rusqlite::types::FromSql;
 use tokio_rusqlite::ToSql;
 use tokio_rusqlite::{params, Connection};
-use tracing::debug;
 use tracing::{info, instrument, trace};
 
 #[derive(Debug, Serialize, Deserialize)]

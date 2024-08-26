@@ -1,5 +1,5 @@
 use anyhow::Result;
-use axum::routing::{get, post};
+use axum::routing::post;
 use axum::Router;
 use cors::cors;
 use get::send_data;

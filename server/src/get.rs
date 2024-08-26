@@ -44,7 +44,7 @@ pub async fn send_data(
         }
         TableType::Light => {
             v = serde_json::to_value(
-                database::select::<i64>(&DB_CONNECTION, table_type, timestamp).await?,
+                database::select::<f64>(&DB_CONNECTION, table_type, timestamp).await?,
             )?;
         }
     };

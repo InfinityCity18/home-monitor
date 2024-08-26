@@ -18,7 +18,7 @@ pub struct MonitorData {
     #[serde(rename = "m")]
     motion: bool,
     #[serde(rename = "l")]
-    light: bool,
+    light: f64,
 }
 
 #[instrument(level = "info")]

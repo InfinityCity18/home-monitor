@@ -8,7 +8,7 @@ use plotters::prelude::*;
 use plotters::{chart::ChartBuilder, drawing::IntoDrawingArea};
 use plotters_canvas::CanvasBackend;
 
-pub const TEMPERATURE_PLOT_ID: &str = "temperature-plot";
+pub const LIGHT_PLOT_ID: &str = "light-plot";
 
 pub fn draw_plot((p, id, t): (Period, String, TableType)) {
     wasm_bindgen_futures::spawn_local(async move {
@@ -30,7 +30,7 @@ pub fn draw_plot((p, id, t): (Period, String, TableType)) {
             .set_label_area_size(LabelAreaPosition::Left, 60)
             .set_label_area_size(LabelAreaPosition::Right, 60)
             .set_label_area_size(LabelAreaPosition::Bottom, 40)
-            .build_cartesian_2d(start..end, 0.0..45.0)
+            .build_cartesian_2d(start..end, 0.0..100000.0)
             .expect("Failed to build chart");
 
         chart
@@ -39,7 +39,7 @@ pub fn draw_plot((p, id, t): (Period, String, TableType)) {
             .x_labels(p.label_amount())
             .x_label_formatter(&p.format_fn())
             .max_light_lines(5)
-            .y_desc("Temperature (C°)")
+            .y_desc("Light (lux)")
             .draw()
             .expect("Failed to draw on ChartContext");
 
