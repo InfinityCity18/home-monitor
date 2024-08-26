@@ -28,20 +28,20 @@ pub fn TemperatureWindow() -> Html {
 }
 
 #[function_component]
-fn TemperaturePlot(TemperaturePlotProps { p }: &TemperaturePlotProps) -> Html {
+fn TemperaturePlot(PlotProps { p }: &PlotProps) -> Html {
     let period_clone = p.clone();
     use_effect(move || {
         draw_plot(period_clone);
     });
     html! {
         <div>
-            <canvas height=400 width=1500 id={TEMPERATURE_PLOT_ID}/>
+            <canvas height=400 width=1400 id={TEMPERATURE_PLOT_ID}/>
         </div>
     }
 }
 
 #[derive(Properties, PartialEq, Debug, Clone)]
-pub struct TemperaturePlotProps {
+pub struct PlotProps {
     p: Period,
 }
 
@@ -86,7 +86,7 @@ fn draw_plot(p: Period) {
 
         let json = ClientRequest {
             period: p,
-            table_type: "Temperature".to_string(),
+            table_type: "Humidity".to_string(),
         };
 
         let response = Request::post(&(SERVER_URL.to_owned() + "/data"))

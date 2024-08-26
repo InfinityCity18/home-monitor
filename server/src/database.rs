@@ -16,10 +16,6 @@ pub enum TableType {
     Light,
 }
 
-pub trait TableTypeSelector {
-    type T: FromSql + Send + Sync + 'static;
-}
-
 impl TableType {
     pub fn table_name(&self) -> String {
         match self {
