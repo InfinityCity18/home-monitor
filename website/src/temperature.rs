@@ -1,9 +1,12 @@
+use crate::consts::SERVER_URL;
 use crate::period::{set_period, Period};
-use chrono::{Days, Local, Timelike};
+use chrono::{DateTime, Days, Local};
 use full_palette::WHITE;
+use gloo_net::http::Request;
 use plotters::prelude::*;
 use plotters::{chart::ChartBuilder, drawing::IntoDrawingArea};
 use plotters_canvas::CanvasBackend;
+use serde::{Deserialize, Serialize};
 use yew::prelude::*;
 
 const TEMPERATURE_PLOT_ID: &str = "temperature-plot";
@@ -42,35 +45,72 @@ pub struct TemperaturePlotProps {
     p: Period,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ClientRequest {
+    pub period: Period,
+    pub table_type: String,
+}
+
 fn draw_plot(p: Period) {
-    let backend = CanvasBackend::new(TEMPERATURE_PLOT_ID)
-        .expect(format!("Could not get CanvasBackend from {}", TEMPERATURE_PLOT_ID).as_str());
-    let root = backend.into_drawing_area();
+    wasm_bindgen_futures::spawn_local(async move {
+        let backend = CanvasBackend::new(TEMPERATURE_PLOT_ID)
+            .expect(format!("Could not get CanvasBackend from {}", TEMPERATURE_PLOT_ID).as_str());
+        let root = backend.into_drawing_area();
 
-    let end = Local::now();
-    let start = end - Days::new(p.amount_of_days());
+        let end = Local::now();
+        let start = end - Days::new(p.amount_of_days());
 
-    root.fill(&WHITE).expect("Filling failed");
+        root.fill(&WHITE).expect("Filling failed");
 
-    let mut chart = ChartBuilder::on(&root)
-        .margin(10)
-        .caption(
-            format!("Temperature in last {}", p.to_lowercase_text()),
-            ("sans-serif", 40),
-        )
-        .set_label_area_size(LabelAreaPosition::Left, 60)
-        .set_label_area_size(LabelAreaPosition::Right, 60)
-        .set_label_area_size(LabelAreaPosition::Bottom, 40)
-        .build_cartesian_2d(start..end, 0.0..45.0)
-        .expect("Failed to build chart");
+        let mut chart = ChartBuilder::on(&root)
+            .margin(10)
+            .caption(
+                format!("Temperature in last {}", p.to_lowercase_text()),
+                ("sans-serif", 40),
+            )
+            .set_label_area_size(LabelAreaPosition::Left, 60)
+            .set_label_area_size(LabelAreaPosition::Right, 60)
+            .set_label_area_size(LabelAreaPosition::Bottom, 40)
+            .build_cartesian_2d(start..end, 0.0..45.0)
+            .expect("Failed to build chart");
 
-    chart
-        .configure_mesh()
-        .disable_x_mesh()
-        .x_labels(p.label_amount())
-        .x_label_formatter(&p.format_fn())
-        .max_light_lines(5)
-        .y_desc("Temperature (C°)")
-        .draw()
-        .expect("Failed to draw on ChartContext");
+        chart
+            .configure_mesh()
+            .disable_x_mesh()
+            .x_labels(p.label_amount())
+            .x_label_formatter(&p.format_fn())
+            .max_light_lines(5)
+            .y_desc("Temperature (C°)")
+            .draw()
+            .expect("Failed to draw on ChartContext");
+
+        let json = ClientRequest {
+            period: p,
+            table_type: "Temperature".to_string(),
+        };
+
+        let response = Request::post(&(SERVER_URL.to_owned() + "/data"))
+            .json(&json)
+            .expect("Failed to insert json into requestbuilder")
+            .send()
+            .await
+            .expect("Getting data failed");
+
+        let data: Vec<(i64, f64)> = response
+            .json()
+            .await
+            .expect("Deserialization of data failed");
+
+        chart
+            .draw_series(LineSeries::new(
+                data.iter().map(|(timestamp, v)| {
+                    (
+                        DateTime::from(DateTime::from_timestamp(*timestamp, 0).unwrap()),
+                        *v,
+                    )
+                }),
+                &BLUE,
+            ))
+            .unwrap();
+    })
 }

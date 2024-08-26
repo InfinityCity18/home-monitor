@@ -1,9 +1,10 @@
 use chrono::{DateTime, Datelike, Local, Month, Timelike};
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::JsCast;
 use web_sys::{EventTarget, HtmlSelectElement};
 use yew::prelude::*;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum Period {
     Day,
     Week,

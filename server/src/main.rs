@@ -1,6 +1,7 @@
 use anyhow::Result;
 use axum::routing::{get, post};
 use axum::Router;
+use cors::cors;
 use get::send_data;
 use post::monitor_post;
 use std::sync::OnceLock;
@@ -35,7 +36,7 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .route(MONITOR_PATH, post(monitor_post))
-        .route(DATA_PATH, get(send_data));
+        .route(DATA_PATH, post(send_data).options(cors));
 
     let listener = tokio::net::TcpListener::bind(BIND_SOCK_ADDR).await?;
     axum::serve(listener, app).await?;

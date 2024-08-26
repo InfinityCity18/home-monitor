@@ -1,6 +1,7 @@
 use temperature::TemperatureWindow;
 use yew::prelude::*;
 
+mod consts;
 mod humidity;
 mod period;
 mod temperature;
