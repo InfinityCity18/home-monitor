@@ -1,0 +1,11 @@
+services:
+  home-monitor:
+    container_name: home-monitor
+    image: infinitycity/home-monitor:latest
+    ports:
+      - "8137:8137/tcp"
+      - "8138:8138/tcp"
+    volumes:
+      - './data.db:/home-monitor/server/data.db'
+      - './consts.rs:/home-monitor/website/src/consts.rs'
+    restart: unless-stopped
