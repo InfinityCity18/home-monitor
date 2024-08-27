@@ -1,3 +1,4 @@
+use crate::database;
 use crate::error::AppError;
 use crate::{
     database::{insert, TableType, ToSqlDebug},
@@ -43,6 +44,8 @@ pub async fn monitor_post(Json(payload): Json<MonitorData>) -> Result<(), AppErr
     for (t, d) in data_types {
         insert(timestamp, d, &DB_CONNECTION, t).await?;
     }
+    database::delete(&DB_CONNECTION).await?;
+
     info!("Monitor post data successfully inserted");
     return Ok(());
 }

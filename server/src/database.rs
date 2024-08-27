@@ -7,6 +7,8 @@ use tokio_rusqlite::ToSql;
 use tokio_rusqlite::{params, Connection};
 use tracing::{info, instrument, trace};
 
+use crate::period::Period;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub enum TableType {
     Temperature,
@@ -62,6 +64,39 @@ pub async fn insert<T: ToSql + Debug + Send + Sync + 'static>(
 
     trace!("Insertion succeded");
 
+    Ok(())
+}
+
+#[instrument(level = "info", skip(conn))]
+pub async fn delete(conn: &OnceLock<Connection>) -> Result<()> {
+    trace!("Beginning deletion of older records...");
+
+    let conn = conn.get().unwrap();
+    let tables = [
+        TableType::Temperature,
+        TableType::Humidity,
+        TableType::Motion,
+        TableType::Light,
+    ];
+    let month = chrono::Days::new(Period::Month.amount_of_days());
+    let timestamp = (chrono::Local::now() - month).timestamp();
+
+    for table in tables {
+        conn.call(move |conn| {
+            conn.execute(
+                format!(
+                    "DELETE FROM {} WHERE time < {timestamp}",
+                    table.table_name()
+                )
+                .as_str(),
+                [],
+            )?;
+            Ok(())
+        })
+        .await?;
+    }
+
+    trace!("Successfully deleted older records");
     Ok(())
 }
 
