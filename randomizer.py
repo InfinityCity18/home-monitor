@@ -1,8 +1,14 @@
 import requests
 import json
 import random
+import time
 
-url = 'https://10.21.37.100:8138/monitor'
+url = 'http://10.21.37.100:8138/monitor'
+
+headers = {
+    'Content-Type': 'application/json', 
+}
+
 
 while True:
     data = {
@@ -11,7 +17,6 @@ while True:
         "h" : random.uniform(30.0, 84.0),
         "t" : random.uniform(20.0, 32.0)
     }
-    response = requests.post(url, json=data)
+    response = requests.post(url, json=data, headers=headers)
     print(response.status_code)
-    print(response.json())
-    sleep(60)
+    time.sleep(300)

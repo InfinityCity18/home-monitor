@@ -78,7 +78,7 @@ pub fn draw_plot((p, id, t): (Period, String, TableType)) {
                     )
                 }),
                 0.0,
-                &BLUE,
+                &WHITE.mix(0.3),
             ))
             .unwrap();
     })

@@ -16,7 +16,7 @@ mod get;
 mod period;
 mod post;
 
-const DB_PATH: &str = "data.db";
+const DB_PATH: &str = "/home-monitor/server/data.db";
 const BIND_SOCK_ADDR: &str = "0.0.0.0:8138";
 const MONITOR_PATH: &str = "/monitor";
 const DATA_PATH: &str = "/data";
